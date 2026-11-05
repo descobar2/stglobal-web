@@ -12,8 +12,8 @@ describe("FE-02: calendario de consultorías", () => {
     expect(slots[0].time.getMinutes()).toBe(0);
   });
   it("termina con el horario 17:30", () => {
-    expect(slots.at(-1)?.time.getHours()).toBe(17);
-    expect(slots.at(-1)?.time.getMinutes()).toBe(30);
+    expect(slots[slots.length - 1]?.time.getHours()).toBe(17);
+    expect(slots[slots.length - 1]?.time.getMinutes()).toBe(30);
   });
   it("no permite una cita de 90 minutos a las 11:30", () => {
     expect(canFitSlot(slots[7], 90)).toBe(false);
@@ -22,7 +22,7 @@ describe("FE-02: calendario de consultorías", () => {
     expect(canFitSlot(slots[7], 30)).toBe(true);
   });
   it("no permite una cita de 60 minutos a las 17:30", () => {
-    expect(canFitSlot(slots.at(-1)!, 60)).toBe(false);
+    expect(canFitSlot(slots[slots.length - 1]!, 60)).toBe(false);
   });
   it("acepta una cita de 180 minutos a las 15:00", () => {
     expect(canFitSlot(slots[8], 180)).toBe(true);
