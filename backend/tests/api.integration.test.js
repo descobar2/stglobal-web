@@ -1,7 +1,6 @@
-import test, { after } from "node:test";
+import test from "node:test";
 import assert from "node:assert/strict";
 import { createApp } from "../app.js";
-import { closePool } from "../models/db.js";
 
 process.env.JWT_SECRET ||= "ci-secret-not-for-production";
 process.env.COOKIE_NAME ||= "auth_token";
@@ -77,4 +76,4 @@ test("IT-03/04 y RG-01: CRUD de consultorías + aislamiento de usuarios en Maria
     assert.equal(profile.status, 200);
   });
 });
-after(async () => { await closePool(); });
+

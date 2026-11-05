@@ -4,9 +4,9 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "test": "node --test --experimental-test-coverage --test-coverage-include='**/controllers/*.js' --test-coverage-include='**/utils/*.js' --test-coverage-include='**/middlewares/requireauth.js' --test-coverage-lines=60",
+    "test": "node --test --test-force-exit --experimental-test-coverage --test-coverage-include='**/controllers/*.js' --test-coverage-include='**/utils/*.js' --test-coverage-include='**/middlewares/requireauth.js' --test-coverage-lines=60",
     "test:unit": "node --test tests/consultation.unit.test.js tests/consultation.controller.test.js",
-    "test:integration": "node --test tests/api.integration.test.js",
+    "test:integration": "node --test --test-force-exit tests/api.integration.test.js",
     "check": "node --check app.js && node --check server.js && node --check controllers/authController.js && node --check controllers/consultationController.js"
   },
   "keywords": [],
