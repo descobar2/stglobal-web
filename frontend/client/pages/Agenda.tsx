@@ -3,34 +3,11 @@ import { addDays, format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, isSa
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { generateSlots, canFitSlot } from "@/lib/agenda";
 
 const DURATIONS = [30, 45, 60, 75, 90];
 const PENDING_KEY = "stglobal_consult_pending";
 const RESCHEDULE_KEY = "stglobal_consult_reschedule";
-
-function generateSlots(date: Date) {
-  // Example availability: 08:00-12:00 and 15:00-18:00 every day in 30-min intervals
-  type Slot = { label: string; time: Date; endLimit: Date };
-  const slots: Slot[] = [];
-  const dayStart1 = new Date(date);
-  dayStart1.setHours(8, 0, 0, 0);
-  const dayEnd1 = new Date(date);
-  dayEnd1.setHours(12, 0, 0, 0);
-  const dayStart2 = new Date(date);
-  dayStart2.setHours(15, 0, 0, 0);
-  const dayEnd2 = new Date(date);
-  dayEnd2.setHours(18, 0, 0, 0);
-
-  for (let t = dayStart1.getTime(); t < dayEnd1.getTime(); t += 30 * 60 * 1000) {
-    const d = new Date(t);
-    slots.push({ label: format(d, "hh:mm a"), time: d, endLimit: dayEnd1 });
-  }
-  for (let t = dayStart2.getTime(); t < dayEnd2.getTime(); t += 30 * 60 * 1000) {
-    const d = new Date(t);
-    slots.push({ label: format(d, "hh:mm a"), time: d, endLimit: dayEnd2 });
-  }
-  return slots;
-}
 
 export default function Agenda() {
   useEffect(() => {
@@ -188,7 +165,7 @@ export default function Agenda() {
                 {slots.length === 0 && <p className="text-sm text-muted-foreground">Selecciona una fecha para ver horarios.</p>}
                 {slots.map((slot) => {
                   const endTime = addMinutes(slot.time, duration);
-                  const disabled = endTime.getTime() > slot.endLimit.getTime();
+                  const disabled = !canFitSlot(slot, duration);
                   const iso = slot.time.toISOString();
                   return (
                     <button
