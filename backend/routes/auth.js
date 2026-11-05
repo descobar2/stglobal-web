@@ -1,6 +1,6 @@
 import express from "express";
 import { googleSignIn, me, logout, signup, login, updateProfile } from "../controllers/authController.js";
-import { requireAuth } from "../middlewares/requireAuth.js";
+import { requireAuth } from "../middlewares/requireauth.js";
 
 const router = express.Router();
 

@@ -36,6 +36,8 @@ export async function ping() {
   }
 }
 
+export async function closePool() { await pool.end(); }
+
 // Graceful shutdown
 process.on("SIGINT", async () => {
   try {
