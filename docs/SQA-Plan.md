@@ -34,3 +34,6 @@ Estándar de referencia: ISO/IEC/IEEE 29119 (procesos, diseño y documentación 
 
 ## Evidencias mínimas
 `docs/Linea-Base-Calidad.md`, `docs/Matriz-Pruebas.md`, `docs/Reporte-Mejora.md`, `docs/Manual-Tecnico.md`, `docs/Presentacion-Resultados.md`, workflow y enlace a ejecución. No se debe afirmar que un control funciona hasta verificarlo en GitHub Actions.
+
+## Verificación X1 (2026-11-05)
+[Workflow aprobado](https://github.com/descobar2/stglobal-web/actions/runs/41982493436): 23 pruebas backend, 15 frontend; 60.26 % líneas, 74.19 % ramas y 71.43 % funciones (alcance V8 backend indicado). 4 jobs aprobados. SonarCloud y protección de `main`: no aplicados por requerir configuración externa y permisos administrativos.

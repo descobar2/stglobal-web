@@ -106,3 +106,11 @@ Todas las rutas de consultorías requieren sesión (`requireAuth`).
 3. Ajusta `FRONTEND_ORIGIN` y `VITE_API_URL` a los dominios finales.
 
 Lista para extender: integra más módulos (reportes, minutas reales, etc.) manteniendo la separación clara entre frontend React y backend Express.
+
+## Aseguramiento de Calidad del Software — ACS 2026
+
+[![ACS SQA Quality Gates](https://github.com/descobar2/stglobal-web/actions/workflows/quality.yml/badge.svg)](https://github.com/descobar2/stglobal-web/actions/workflows/quality.yml)
+
+El desarrollo SQA está en una rama y PR separados para revisión. Ver [Plan SQA](docs/SQA-Plan.md), [matriz](docs/Matriz-Pruebas.md), [línea base](docs/Linea-Base-Calidad.md), [reporte](docs/Reporte-Mejora.md), [manual](docs/Manual-Tecnico.md) y [evidencias](docs/Evidencias.md). La cobertura reportada (60.26 %) corresponde únicamente a los archivos backend incluidos en el gate, no a toda la aplicación.
+
+Reproducción: `npm ci --prefix backend && npm ci --prefix frontend`; ejecutar `npm test --prefix frontend` y, con MariaDB temporal, `RUN_DB_TESTS=1 npm test --prefix backend`. El workflow hace ambas verificaciones con DB de pruebas. El despliegue productivo queda fuera del CI SQA.
