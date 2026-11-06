@@ -223,7 +223,7 @@ export default function Layout() {
 						<p className="font-semibold">Síguenos</p>
 						<div className="mt-3 flex gap-2">
 							<a
-							href="http://stglobal.tech/linkedin"
+							href="https://stglobal.tech/linkedin"
 							target="_blank"
 							rel="noopener noreferrer"
 							className="inline-flex h-9 w-9 items-center justify-center rounded-md border hover:bg-accent"
@@ -233,7 +233,7 @@ export default function Layout() {
 							</svg>
 							</a>
 							<a
-							href="http://stglobal.tech/facebook"
+							href="https://stglobal.tech/facebook"
 							target="_blank"
 							rel="noopener noreferrer"
 							className="inline-flex h-9 w-9 items-center justify-center rounded-md border hover:bg-accent"
@@ -243,7 +243,7 @@ export default function Layout() {
 							</svg>
 							</a>
 							<a
-							href="http://stglobal.tech/twitter"
+							href="https://stglobal.tech/twitter"
 							target="_blank"
 							rel="noopener noreferrer"
 							className="inline-flex h-9 w-9 items-center justify-center rounded-md border hover:bg-accent"
