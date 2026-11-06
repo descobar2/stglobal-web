@@ -95,7 +95,7 @@ jobs:
           set -o pipefail
           npm test -- --coverage --coverage.provider=v8 \
             --coverage.reporter=lcov --coverage.reporter=text \
-            --coverage.include='client/**/*.{ts,tsx}' \
+            --coverage.include='**/*.{ts,tsx}' \
             2>&1 | tee frontend-test.log
           test -s coverage/lcov.info
       - name: Publish test coverage for static analysis
