@@ -76,13 +76,38 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          npm test 2>&1 | tee backend-test.log
-      - name: Vitest frontend
+          mkdir -p coverage
+          npm test -- \
+            --test-reporter=spec --test-reporter-destination=stdout \
+            --test-reporter=lcov --test-reporter-destination=coverage/lcov.info \
+            2>&1 | tee backend-test.log
+          test -s coverage/lcov.info
+      - name: Install matching Vitest coverage provider
+        working-directory: frontend
+        shell: bash
+        run: |
+          VITEST_VERSION="$(node -p "require('./node_modules/vitest/package.json').version")"
+          npm install --no-save --package-lock=false --ignore-scripts "@vitest/coverage-v8@$VITEST_VERSION"
+      - name: Vitest frontend and LCOV coverage
         working-directory: frontend
         shell: bash
         run: |
           set -o pipefail
-          npm test 2>&1 | tee frontend-test.log
+          npm test -- --coverage --coverage.provider=v8 \
+            --coverage.reporter=lcov --coverage.reporter=text \
+            --coverage.reportsDirectory="$PWD/coverage" \
+            --coverage.include='**/*.{ts,tsx}' \
+            2>&1 | tee frontend-test.log
+          test -s coverage/lcov.info
+      - name: Publish test coverage for static analysis
+        uses: actions/upload-artifact@v4
+        with:
+          name: acs-coverage
+          path: |
+            backend/coverage/lcov.info
+            frontend/coverage/lcov.info
+          if-no-files-found: error
+          retention-days: 7
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -93,6 +118,7 @@ jobs:
 
   analyze:
     name: analyze
+    needs: [test]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -106,6 +132,16 @@ jobs:
         run: |
           set -o pipefail
           npm exec --yes --package=eslint@9.39.1 -- eslint --config eslint.config.mjs backend 2>&1 | tee eslint-report.txt
+      - name: Retrieve test coverage reports
+        uses: actions/download-artifact@v4
+        with:
+          name: acs-coverage
+          path: .
+      - name: Confirm coverage files are available
+        shell: bash
+        run: |
+          test -s backend/coverage/lcov.info
+          test -s frontend/coverage/lcov.info
       - name: SonarQube Cloud analysis and Quality Gate
         if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
         uses: SonarSource/sonarqube-scan-action@v8.4.0
