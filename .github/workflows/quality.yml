@@ -1,0 +1,151 @@
+name: ACS - SQA Quality Gates
+on:
+  push:
+    branches: [feat/acs-sqa-ci-cd-2026, main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: acs-quality-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: |
+            backend/package-lock.json
+            frontend/package-lock.json
+      - name: Dependencies
+        run: |
+          npm ci --prefix backend
+          npm ci --prefix frontend
+      - name: Backend JS syntax
+        run: npm run check --prefix backend
+      - name: Frontend types
+        run: npm run typecheck --prefix frontend
+      - name: Frontend build
+        run: npm run build:client --prefix frontend
+
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    services:
+      mariadb:
+        image: mariadb:11
+        env:
+          MARIADB_ROOT_PASSWORD: local-test-only
+          MARIADB_DATABASE: stglobal_test
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=10s --health-timeout=5s --health-retries=12
+    env:
+      NODE_ENV: test
+      DB_HOST: 127.0.0.1
+      DB_PORT: '3306'
+      DB_NAME: stglobal_test
+      DB_USER: root
+      DB_PASS: local-test-only
+      JWT_SECRET: github-actions-test-only-key
+      COOKIE_NAME: auth_token
+      FRONTEND_ORIGIN: http://localhost:5173
+      RUN_DB_TESTS: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: |
+            backend/package-lock.json
+            frontend/package-lock.json
+      - name: Dependencies
+        run: |
+          npm ci --prefix backend
+          npm ci --prefix frontend
+      - name: Backend tests and >=60% line coverage
+        working-directory: backend
+        shell: bash
+        run: |
+          set -o pipefail
+          npm test 2>&1 | tee backend-test.log
+      - name: Vitest frontend
+        working-directory: frontend
+        shell: bash
+        run: |
+          set -o pipefail
+          npm test 2>&1 | tee frontend-test.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: acs-test-evidence
+          path: |
+            backend/backend-test.log
+            frontend/frontend-test.log
+
+  analyze:
+    name: analyze
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: ESLint errors gate
+        shell: bash
+        run: |
+          set -o pipefail
+          npm exec --yes --package=eslint@9.39.1 -- eslint --config eslint.config.mjs backend 2>&1 | tee eslint-report.txt
+      - name: SonarQube Cloud analysis and Quality Gate
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: SonarSource/sonarqube-scan-action@v8.4.0
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >-
+            -Dsonar.qualitygate.wait=true
+            -Dsonar.qualitygate.timeout=300
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: acs-static-evidence
+          path: eslint-report.txt
+
+  report:
+    name: report
+    if: always()
+    needs: [build, test, analyze]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Consolidate results
+        env:
+          BUILD_RESULT: ${{ needs.build.result }}
+          TEST_RESULT: ${{ needs.test.result }}
+          ANALYZE_RESULT: ${{ needs.analyze.result }}
+        shell: bash
+        run: |
+          {
+            echo "## ACS - Quality Gate"
+            echo "| Job | Result |"
+            echo "|---|---|"
+            echo "| build | $BUILD_RESULT |"
+            echo "| test | $TEST_RESULT |"
+            echo "| analyze | $ANALYZE_RESULT |"
+            echo "Backend scope: controllers, utils, requireauth. Minimum line coverage: 60%."
+          } | tee acs-summary.md >> "$GITHUB_STEP_SUMMARY"
+          [[ "$BUILD_RESULT" == success && "$TEST_RESULT" == success && "$ANALYZE_RESULT" == success ]]
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: acs-summary
+          path: acs-summary.md

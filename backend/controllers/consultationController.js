@@ -1,4 +1,5 @@
 import ConsultationModel from "../models/consultationModel.js";
+import { parseConsultationWindow } from "../utils/consultation.js";
 
 function toISO(row) {
   if (!row) return null;
@@ -16,15 +17,10 @@ function toISO(row) {
 export const createConsultation = async (req, res) => {
   try {
     const userId = req.user?.uid;
-    const { start, end, duration } = req.body || {};
-    if (!userId || !start || !end || !duration) {
-      return res.status(400).json({ error: "Faltan datos para agendar" });
-    }
-    const startAt = new Date(start);
-    const endAt = new Date(end);
-    if (Number.isNaN(startAt.getTime()) || Number.isNaN(endAt.getTime())) {
-      return res.status(400).json({ error: "Fechas inválidas" });
-    }
+    if (!userId) return res.status(401).json({ error: "No autorizado" });
+    const window = parseConsultationWindow(req.body);
+    if (!window.ok) return res.status(400).json({ error: window.error });
+    const { startAt, endAt, duration } = window;
     const consultation = await ConsultationModel.create({
       userId,
       startAt,
@@ -64,15 +60,11 @@ export const rescheduleConsultation = async (req, res) => {
   try {
     const userId = req.user?.uid;
     const { id } = req.params;
-    const { start, end, duration } = req.body || {};
-    if (!id || !start || !end || !duration) {
-      return res.status(400).json({ error: "Datos incompletos" });
-    }
-    const startAt = new Date(start);
-    const endAt = new Date(end);
-    if (Number.isNaN(startAt.getTime()) || Number.isNaN(endAt.getTime())) {
-      return res.status(400).json({ error: "Fechas inválidas" });
-    }
+    if (!userId) return res.status(401).json({ error: "No autorizado" });
+    if (!/^[1-9][0-9]*$/.test(String(id))) return res.status(400).json({ error: "ID inválido" });
+    const window = parseConsultationWindow(req.body);
+    if (!window.ok) return res.status(400).json({ error: window.error });
+    const { startAt, endAt, duration } = window;
     const updated = await ConsultationModel.updateById({
       id,
       userId,

@@ -42,15 +42,15 @@ const ConsultationModel = {
     return this.findById(insertId);
   },
 
-  async findById(id) {
+  async findById(id, userId = null) {
     if (!id) return null;
     await ensureConsultationsTable();
     const rows = await query(
       `SELECT id, user_id AS userId, start_at AS startAt, end_at AS endAt, duration, status, created_at AS createdAt
        FROM ${TABLE_NAME}
-       WHERE id = ?
+       WHERE id = ? AND (? IS NULL OR user_id = ?)
        LIMIT 1`,
-      [id]
+      [id, userId, userId]
     );
     return rows?.[0] ?? null;
   },
@@ -78,13 +78,14 @@ const ConsultationModel = {
 
   async updateById({ id, userId, startAt, endAt, duration, status = "confirmed" }) {
     await ensureConsultationsTable();
-    await query(
+    const result = await query(
       `UPDATE ${TABLE_NAME}
        SET start_at = ?, end_at = ?, duration = ?, status = ?, updated_at = CURRENT_TIMESTAMP
        WHERE id = ? AND user_id = ?`,
       [startAt, endAt, duration, status, id, userId]
     );
-    return this.findById(id);
+    if (!result?.affectedRows) return null;
+    return this.findById(id, userId);
   },
 };
 
