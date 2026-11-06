@@ -8,7 +8,8 @@ const gclient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 export const googleSignIn = async (req, res) => {
   try {
     const { id_token } = req.body;
-    console.log("📨 Google login attempt received. id_token:", id_token ? `${id_token.slice(0, 20)}...` : "null");
+    // Never write OAuth credentials or user-controlled fragments to application logs.
+    console.info("Google login attempt received");
     
     if (!id_token) {
       console.error("❌ Missing id_token in request body");
@@ -27,7 +28,7 @@ export const googleSignIn = async (req, res) => {
     }
 
     const { sub, email, name, picture } = payload;
-    console.log("✅ Token verified. Email:", email, "Sub:", sub);
+    console.info("Google token verified");
 
     // Upsert en tu DB (implementa dentro de userModel.js)
     const user = await User.upsertGoogleUser({
@@ -36,7 +37,7 @@ export const googleSignIn = async (req, res) => {
       name,
       picture,
     });
-    console.log("✅ User upserted:", user.id, user.email);
+    console.info("Google user upserted");
 
     const token = jwt.sign(
       { uid: user.id, email: user.email, name: user.name },
@@ -54,8 +55,9 @@ export const googleSignIn = async (req, res) => {
 
     console.log("✅ Login successful. Sending response.");
     return res.json({ ok: true, user: serializeUser(user) });
-  } catch (e) {
-    console.error("❌ Google login error:", e.message, e.stack);
+  } catch {
+    // Error details from external identity providers can contain untrusted input.
+    console.error("Google login failed");
     return res.status(401).json({ error: "Unauthorized" });
   }
 };
