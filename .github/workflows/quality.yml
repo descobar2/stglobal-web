@@ -96,6 +96,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -104,6 +106,15 @@ jobs:
         run: |
           set -o pipefail
           npm exec --yes --package=eslint@9.39.1 -- eslint --config eslint.config.mjs backend 2>&1 | tee eslint-report.txt
+      - name: SonarQube Cloud analysis and Quality Gate
+        if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+        uses: SonarSource/sonarqube-scan-action@v8.4.0
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >-
+            -Dsonar.qualitygate.wait=true
+            -Dsonar.qualitygate.timeout=300
       - uses: actions/upload-artifact@v4
         if: always()
         with:
