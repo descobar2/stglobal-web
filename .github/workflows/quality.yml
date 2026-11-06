@@ -107,7 +107,7 @@ jobs:
           set -o pipefail
           npm exec --yes --package=eslint@9.39.1 -- eslint --config eslint.config.mjs backend 2>&1 | tee eslint-report.txt
       - name: SonarQube Cloud analysis and Quality Gate
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
         uses: SonarSource/sonarqube-scan-action@v8.4.0
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
